@@ -24,10 +24,13 @@ The exporter can be written in any language, so long as it exports the above key
     1. You may choose any language to write this in, or to use an existing exporter, forked to expose the required keys.
 4. Dockerise the exporter
     1. Produce a Dockerfile that packages the exporter into a Docker image.
-5. Deploy the exporter so that it can read Redis
+5. Deploy the exporter to Kubernetes cluster so that it can read Redis
     1. Provide screenshots of the exporter pulling the required keys from Redis
-6. Documentation
-    1. Please document your design choices, explanations, along with a step by step guide that the reviewer can follow to reproduce your results.
+6. Please provide the following documentation
+    1. Your design choices/explanations
+    2. Dockerfile
+    3. Deploy manifest
+    4. Any additional steps so that the reviewer can follow to reproduce your results
 
 ### Getting started
 
