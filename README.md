@@ -8,10 +8,10 @@ Please do not spend more than 2 hours on the challenge - if you have reach this 
 
 We are looking for a bespoke Prometheus Metrics Exporter for Redis so that we can export Redis metrics and scrape them using Prometheus, that exports at least the following keys:
 
-` 
+```
 braze_redis_keys # a gauge of the total count of keys at a given time
 braze_redis_build_version_info # Info of the current version of Redis running
-`
+```
 
 The exporter can be written in any language, so long as it exports the above keys in the [Prometheus text-based format](https://prometheus.io/docs/instrumenting/exposition_formats/#text-based-format).
 
@@ -33,7 +33,7 @@ The exporter can be written in any language, so long as it exports the above key
 
 You will require the following tools, [minikube](https://minikube.sigs.k8s.io/docs/start/) and [helm](https://helm.sh/docs/helm/helm_install/). If you dont have the tools already installed below are the steps required to get these running on macOS.
 
-`
+```
 # Download minikube (e.g. for macOS using brew) https://minikube.sigs.k8s.io/docs/start/
 brew install minikube
  
@@ -42,7 +42,7 @@ minikube start
  
 # Download helm (e.g. for macOS using brew) https://helm.sh/docs/intro/install/
 brew install helm
-`
+```
 
 1. Add the bitnami helm chart repo
 `helm repo add bitnami https://charts.bitnami.com/bitnami`
