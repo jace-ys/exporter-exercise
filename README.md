@@ -17,7 +17,7 @@ The exporter can be written in any language, so long as it exports the above key
 
 ### Tasks
 
-1. Fork the repository
+1. Clone the repository
 2. Bootstrap the environment
     1. Verify that Redis is able to come up with seeded data.
 3. Write the Prometheus exporter
