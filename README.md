@@ -19,15 +19,15 @@ The exporter can be written in any language, so long as it exports the above key
 
 1. Fork the repository
 2. Bootstrap the environment
-    a. Verify that Redis is able to come up with seeded data.
+  1. Verify that Redis is able to come up with seeded data.
 3. Write the Prometheus exporter
-    a. You may choose any language to write this in, or to use an existing exporter, forked to expose the required keys.
+  1. You may choose any language to write this in, or to use an existing exporter, forked to expose the required keys.
 4. Dockerise the exporter
-    a. Produce a Dockerfile that packages the exporter into a Docker image.
+  1. Produce a Dockerfile that packages the exporter into a Docker image.
 5. Deploy the exporter so that it can read Redis
-    a. Provide screenshots of the exporter pulling the required keys from Redis
+  1. Provide screenshots of the exporter pulling the required keys from Redis
 6. Documentation
-    a. Please document your design choices, explanations, along with a step by step guide that the reviewer can follow to reproduce your results.
+  1. Please document your design choices, explanations, along with a step by step guide that the reviewer can follow to reproduce your results.
 
 ### Getting started
 
