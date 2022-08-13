@@ -1,61 +1,93 @@
-# Exporter Exercise
+# Braze Technical Assessment
 
-We would like to measure your proficiency in software with this challenge. You may complete as much or as little as you like of it.
+This is a Prometheus exporter for Redis and is my solution to the Braze Technical Assessment (see [brief](brief/README.md)).
 
-Please do not spend more than 2 hours on the challenge - if you have reach this time limit then please leave a note with any future enhancements you would like to make.
+## Installation
 
-## Overview
+The exporter is written in Go and you will thus need the Go toolchain installed in order to build the binary. The given Makefile contains some useful commands for building and testing the code.
 
-We are looking for a bespoke Prometheus Metrics Exporter for Redis so that we can export Redis metrics and scrape them using Prometheus, that exports at least the following keys:
-
-```
-braze_redis_keys # a gauge of the total count of keys at a given time
-braze_redis_build_version_info # Info of the current version of Redis running
-```
-
-The exporter can be written in any language, so long as it exports the above keys in the [Prometheus text-based format](https://prometheus.io/docs/instrumenting/exposition_formats/#text-based-format).
-
-### Tasks
-
-1. Clone the repository
-2. Bootstrap the environment
-    1. Verify that Redis is able to come up with seeded data.
-3. Write the Prometheus exporter
-    1. You may choose any language to write this in, or to use an existing exporter, forked to expose the required keys.
-4. Dockerise the exporter
-    1. Produce a Dockerfile that packages the exporter into a Docker image.
-5. Deploy the exporter to Kubernetes cluster so that it can connect to Redis
-    1. Provide evidence of the exporter pulling the required keys from Redis
-6. Please provide the following documentation
-    1. Your design choices/explanations
-    2. Dockerfile
-    3. Deploy manifest
-    4. Any additional steps so that the reviewer can follow to reproduce your results
-
-### Getting started
-
-You will require the following tools, [minikube](https://minikube.sigs.k8s.io/docs/start/) and [helm](https://helm.sh/docs/helm/helm_install/). If you dont have the tools already installed below are the steps required to get these running on macOS.
+To install dependencies:
 
 ```
-# Download minikube (e.g. for macOS using brew) https://minikube.sigs.k8s.io/docs/start/
-brew install minikube
- 
-# Create a cluster
-minikube start
- 
-# Download helm (e.g. for macOS using brew) https://helm.sh/docs/intro/install/
-brew install helm
+make deps
 ```
 
-1. Add the bitnami helm chart repo
-`helm repo add bitnami https://charts.bitnami.com/bitnami`
-2. Install the Redis app using the values file in this repo
-`helm install redis bitnami/redis -f kubernetes/values.yaml`
-3. You will now have 2 stateful sets deployed `redis-master` and `redis-slave` which have been pre-populated with keys.
+To build the `redis-exporter` binary into a local bin directory:
 
-### Hints
+```
+make bin/redis-exporter
+```
 
-See tips on writing a [Prometheus exporter](https://prometheus.io/docs/instrumenting/writing_exporters/). Below are some links to Prometheus clients:
- * [Go](https://github.com/prometheus/client_golang)
- * [Python](https://github.com/prometheus/client_python)
- * [Ruby](https://github.com/prometheus/client_java)
+To run tests:
+```
+make test
+```
+
+To build the Docker image:
+```
+make docker
+```
+
+## Usage
+
+After completing the [getting started setup](brief/README.md#getting-started), to run the exporter in the `minikube` cluster:
+
+1. Build the Docker image:
+
+```
+make docker
+```
+
+1. Load the image into `minikube`:
+
+```
+minikube image load jace-ys/redis-exporter:v0.0.0
+```
+
+2. Deploy the `redis-exporter` Deployment and Service into the cluster
+
+```
+kubectl apply -f kubernetes/redis-exporter
+```
+
+2. Get the Kubernetes URL(s) for the `redis-exporter` Service:
+
+```
+minikube service redis-exporter
+```
+
+3. Your browser should open up with the above URL. To view metrics from the exporter, append the `/metrics` path to the URL. Voilà!
+
+## Evidence
+
+Evidence of the `redis-exporter` successfully collecting metrics from the `redis-master` StatefulSet in the `minikube` cluster:
+
+![evidence.png](evidence.png)
+
+## Design Choices
+
+### Code
+
+The exporter is written as a Go HTTP service, exposing Prometheus metrics on the `/metrics` endpoints. It uses a Redis client to make downstream calls to fetch info and keys, then exporting metrics around them.
+
+One explicit design decision that was made is to handle errors gracefully in the [`Collect`](main.go#L83) function; whenever we make a downstream call to Redis which results in an error, rather than failing hard and causing us to not export any metrics at all, I chose to just log the error and carry on to the next metric. This makes the exporter more tolerant to downstream failures and at least return some partial results.
+
+Ideally, we should also be exporting metrics around the downstream collection process itself to give us visibility on the rate of downstream errors, but I have chosen to leave this out for now due to lack of time.
+
+I have also chosen to make the exporter as unopinionated as possible, allowing one to set it up depending on their own use case. For example, the exporter doesn't dictate what metric namespace to use or whether username and password authentication with Redis is required. This is supported through the use of [config flags and environment variables](main.go#L24-26):
+
+- `namespace`: Namespace prefix for exported metrics
+- `redis.url`: Connection URL of the Redis server to collect metrics from
+
+For our scenario, we [configure these parameters](kubernetes/redis-exporter/deployment.yaml#L34-37) in our Kubernetes Deployment.
+
+### Deployment
+
+I have chosen to deloy the exporter as a Kubernetes Deployment as it is stateless. Another option would be to deploy it as a container within the Redis StatefulSets themselves, which would allow the exporter to communicate with Redis over localhost instead of over the cluster network.
+
+Within the Deployment, we run 3 replicas of the exporter to give us high availability. To get the password to authenticate with Redis, [we mount the `redis` Secret](kubernetes/redis-exporter/deployment.yaml#L32) (from the `bitnami/redis` Helm chart) into the `exporter` container's environment. This password is then used in the interpolation of the `REDIS_URL` that the exporter will use to connect with the downstream Redis instance. By mounting the secret, we don't have to manually read the secret out and hardcode it into the `REDIS_URL` itself, making the whole deployment setup more portable and work right out of the box.
+
+## Future Improvements
+- [ ] Add some basic test coverage
+- [ ] Export metrics about the downstream collection process itself
+- [ ] Use interfaces to allow us to dependency inject a Redis client into the exporter, allowing us to easily switch the underlying implementation

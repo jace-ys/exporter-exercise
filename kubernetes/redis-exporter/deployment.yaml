@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-exporter
+  labels:
+    app: redis-exporter
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: redis-exporter
+  template:
+    metadata:
+      labels:
+        app: redis-exporter
+    spec:
+      containers:
+        - name: exporter
+          image: jace-ys/redis-exporter:v0.0.0
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 9091
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "64Mi"
+              cpu: "250m"
+          envFrom:
+            - secretRef:
+                name: redis # Load the redis-password from the secret into the environment
+          env:
+            - name: NAMESPACE
+              value: braze
+            - name: REDIS_URL
+              value: redis://:$(redis-password)@redis-master.default.svc.cluster.local:6379

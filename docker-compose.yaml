@@ -1,0 +1,16 @@
+services:
+  redis-server:
+    image: docker.io/bitnami/redis:7.0.4-debian-11-r12
+    ports:
+      - 6379:6379
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"
+
+  redis-exporter:
+    build: .
+    image: jace-ys/redis-exporter:v0.0.0
+    ports:
+      - 9091:9091
+    environment:
+      NAMESPACE: local
+      REDIS_URL: redis://redis-server:6379
